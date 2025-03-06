@@ -1,0 +1,141 @@
+# Copyright Broadcom, Inc. All Rights Reserved.
+# SPDX-License-Identifier: APACHE-2.0
+
+services:
+  kafka-0:
+    image: docker.io/bitnami/kafka:3.9
+    ports:
+      - 19092:19092
+    environment:
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+      # Listeners
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:19092,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-0:9092,EXTERNAL://localhost:19092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      # Clustering
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=2
+      # Metrics
+      - KAFKA_JMX_OPTS=-javaagent:/bitnami/kafka/agents/jmx_prometheus_javaagent-1.1.0.jar=7071:/bitnami/kafka/agents/config.yml
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+    volumes:
+      - kafka_0_data_avro:/bitnami/kafka
+      - ./jmx_prometheus_javaagent-1.1.0.jar:/bitnami/kafka/agents/jmx_prometheus_javaagent-1.1.0.jar
+      - ./exporter-config.yml:/bitnami/kafka/agents/config.yml
+    depends_on:
+      - lgtm
+  kafka-1:
+    image: docker.io/bitnami/kafka:3.9
+    ports:
+      - 19093:19093
+    environment:
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+      # Listeners
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:19093,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-1:9092,EXTERNAL://localhost:19093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      # Clustering
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=2
+      # Metrics
+      - KAFKA_JMX_OPTS=-javaagent:/bitnami/kafka/agents/jmx_prometheus_javaagent-1.1.0.jar=7071:/bitnami/kafka/agents/config.yml
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+    volumes:
+      - kafka_1_data_avro:/bitnami/kafka
+      - ./jmx_prometheus_javaagent-1.1.0.jar:/bitnami/kafka/agents/jmx_prometheus_javaagent-1.1.0.jar
+      - ./exporter-config.yml:/bitnami/kafka/agents/config.yml
+    depends_on:
+      - lgtm
+  kafka-2:
+    image: docker.io/bitnami/kafka:3.9
+    ports:
+      - 19094:19094
+    environment:
+      # KRaft settings
+      - KAFKA_CFG_NODE_ID=2
+      - KAFKA_CFG_PROCESS_ROLES=controller,broker
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_KRAFT_CLUSTER_ID=abcdefghijklmnopqrstuv
+      # Listeners
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:19094,CONTROLLER://:9093
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-2:9092,EXTERNAL://localhost:19094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      # Clustering
+      - KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=3
+      - KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR=2
+      # Metrics
+      - KAFKA_JMX_OPTS=-javaagent:/bitnami/kafka/agents/jmx_prometheus_javaagent-1.1.0.jar=7071:/bitnami/kafka/agents/config.yml
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://lgtm:4317
+      - OTEL_EXPORTER_OTLP_PROTOCOL=grpc
+    volumes:
+      - kafka_2_data_avro:/bitnami/kafka
+      - ./jmx_prometheus_javaagent-1.1.0.jar:/bitnami/kafka/agents/jmx_prometheus_javaagent-1.1.0.jar
+      - ./exporter-config.yml:/bitnami/kafka/agents/config.yml
+    depends_on:
+      - lgtm
+  schema-registry:
+    image: docker.io/bitnami/schema-registry:7.8
+    ports:
+      - '8081:8081'
+    depends_on:
+      - kafka-0
+      - kafka-1
+      - kafka-2
+    environment:
+      - SCHEMA_REGISTRY_LISTENERS=http://0.0.0.0:8081
+      - SCHEMA_REGISTRY_HOST_NAME=schema-registry
+      - SCHEMA_REGISTRY_KAFKA_BROKERS=PLAINTEXT://kafka-0:9092,PLAINTEXT://kafka-1:9092,PLAINTEXT://kafka-2:9092
+  akhq:
+    image: tchiotludo/akhq:0.25.1@sha256:cfaef8f419c4e4b78c583597d6428b63166e90eeb194af890264d68051a22180
+
+    depends_on:
+      - schema-registry
+    environment:
+      AKHQ_CONFIGURATION: |
+        akhq:
+          connections:
+            docker-kafka-server:
+              properties:
+                bootstrap.servers: "kafka-0:9092,kafka-1:9092,kafka-2:9092"
+              schema-registry:
+                url: "http://schema-registry:8081"
+                type: confluent
+    ports:
+      - "9193:8080"
+  lgtm:
+    image: grafana/otel-lgtm
+    volumes:
+      - lgtm_data:/data
+      - ./prometheus.yaml:/otel-lgtm/prometheus.yaml
+      - ./dashboard.yaml:/otel-lgtm/grafana/conf/provisioning/dashboards/grafana-dashboards.yaml
+      - ./grafana-dashboard-kafka-prometheus.json:/otel-lgtm/grafana-dashboard-kafka-prometheus.json
+    ports:
+      - "3000:3000"
+volumes:
+  lgtm_data:
+    driver: local
+  kafka_0_data_avro:
+    driver: local
+  kafka_1_data_avro:
+    driver: local
+  kafka_2_data_avro:
+    driver: local
